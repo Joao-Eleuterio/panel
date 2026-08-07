@@ -405,6 +405,8 @@ let state = { view:'hoje', area:'Todas', type:'Todos', done:'abertas', q:'', edi
 const STATUSES=[{k:'abertas',label:'Por fazer'},{k:'feitas',label:'Feitas'},{k:'todas',label:'Todas'}];
 const $ = s => document.querySelector(s);
 const todayISO = () => new Date().toISOString().slice(0,10);
+// true se o utilizador está a escrever num campo dentro da lista (não reconstruir por baixo dele)
+function listHasFocus(){ const a=document.activeElement, l=$('#list'); return !!(a && l && l.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); }
 
 /* ---------- render ---------- */
 async function render(){
@@ -753,7 +755,8 @@ async function syncNow(silent){
     }
     setDot('ok');
     if(!silent) setStatus(`✓ Sincronizado. ${local.length} enviados, ${merged} atualizados.`,'ok');
-    render();
+    // só reconstruir a lista se houve mudanças reais E o utilizador não está a escrever num campo
+    if(merged>0 && !listHasFocus()) render();
   }catch(e){ setDot('err'); if(!silent) setStatus('Erro: '+e.message,'err'); }
 }
 
