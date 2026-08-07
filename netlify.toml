@@ -1,0 +1,11 @@
+# Site estático servido a partir da raiz do repo. Sem build step.
+[build]
+  publish = "."
+  command = ""
+
+# Headers básicos de segurança (não afetam o funcionamento da PWA)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
