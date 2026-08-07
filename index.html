@@ -794,6 +794,16 @@ async function saveDieta(entry){
   await dbPut(it); scheduleSync();
 }
 async function deleteDieta(date){ const it=await dbGet(dietId(date)); if(it){ it.deleted=true; it.updatedAt=Date.now(); await dbPut(it); scheduleSync(); } }
+async function exportDietaJSON(){
+  const all=(await dbAll()).filter(i=>!i.deleted);
+  const entries=getDietaEntries(all).sort((a,b)=>a.date.localeCompare(b.date)).map(e=>({
+    date:e.date, weight:e.weight??null, steps:e.steps??null, cardio:e.cardio??null,
+    hunger:e.hunger??null, sleep:e.sleep??null, strength:!!e.strength, creatine:!!e.creatine, whey:!!e.whey, notes:e.text||''
+  }));
+  const blob=new Blob([JSON.stringify(entries,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='dieta-'+todayISO()+'.json'; a.click(); URL.revokeObjectURL(a.href);
+}
 async function fillDietForm(date){
   const it=await dbGet(dietId(date)); let v={}; if(it){ try{ v=JSON.parse(it.notes||'{}'); }catch(e){} }
   $('#di_date').value=date;
@@ -865,7 +875,10 @@ async function renderDieta(all){
       <button class="btn primary" id="di_save" style="width:100%; margin-top:12px">Guardar registo</button>
     </div>
     <div class="card" style="display:block">
-      <div class="section-t" style="margin-top:0">Histórico</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+        <div class="section-t" style="margin:0">Histórico</div>
+        <button class="linkbtn" id="di_export">Exportar JSON</button>
+      </div>
       <div id="dietHist"></div>
     </div>
   `;
@@ -894,6 +907,7 @@ function bind(){
   $('#list').addEventListener('click',e=>{
     if(e.target.closest('#btnTrk')){ openTrk(); return; }
     if(e.target.closest('#di_save')){ saveDietaFromForm(); return; }
+    if(e.target.closest('#di_export')){ exportDietaJSON(); return; }
     const de=e.target.closest('[data-diet-edit]'); if(de){ fillDietForm(de.dataset.dietEdit); return; }
     const dd=e.target.closest('[data-diet-del]'); if(dd){ deleteDieta(dd.dataset.dietDel).then(render); return; }
     const act=e.target.closest('[data-act]'); if(act && act.dataset.act!=='text'){ handleTrkAction(todayISO(),act,$('#todayControls')); return; }
