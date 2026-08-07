@@ -739,11 +739,15 @@ async function syncNow(silent){
            : (k==='createdAt'||k==='updatedAt') ? Date.now()
            : (k in defs) ? defs[k] : null;
     } return o; };
+    let pushErr=null;
     if(local.length){
-      const up=await fetch(base+'?on_conflict=id',{method:'POST',
-        headers:{...h,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(local.map(norm))});
-      if(!up.ok) throw new Error('push '+up.status+': '+(await up.text()).slice(0,140));
+      try{
+        const up=await fetch(base+'?on_conflict=id',{method:'POST',
+          headers:{...h,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(local.map(norm))});
+        if(!up.ok) pushErr='envio '+up.status+': '+(await up.text()).slice(0,120);
+      }catch(e){ pushErr=e.message; }
     }
+    // receber SEMPRE, mesmo que o envio tenha falhado
     const pull=await fetch(base+'?select=*',{headers:h});
     if(!pull.ok) throw new Error('pull '+pull.status);
     const remote=await pull.json();
@@ -753,8 +757,8 @@ async function syncNow(silent){
       const l=map[r.id];
       if(!l || (r.updatedAt||0) > (l.updatedAt||0)){ await dbPut(r); merged++; }
     }
-    setDot('ok');
-    if(!silent) setStatus(`✓ Sincronizado. ${local.length} enviados, ${merged} atualizados.`,'ok');
+    setDot(pushErr?'err':'ok');
+    if(!silent) setStatus(pushErr?('Recebido, mas o envio falhou — '+pushErr):`✓ Sincronizado. ${local.length} enviados, ${merged} recebidos.`, pushErr?'err':'ok');
     // só reconstruir a lista se houve mudanças reais E o utilizador não está a escrever num campo
     if(merged>0 && !listHasFocus()) render();
   }catch(e){ setDot('err'); if(!silent) setStatus('Erro: '+e.message,'err'); }
