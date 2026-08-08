@@ -227,7 +227,7 @@
 <nav>
   <button class="navbtn on" data-view="hoje"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 1.5"/></svg>Hoje</button>
   <button class="navbtn" data-view="tudo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>Tudo</button>
-  <button class="navbtn" data-view="diario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 1 6.5 18H19v3H6.5A1.5 1.5 0 0 1 5 19.5z"/><path d="M9 7.5h6M9 11h6"/></svg>Diário</button>
+  <button class="navbtn" data-view="despesas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/></svg>Despesas</button>
   <button class="navbtn" data-view="dieta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 5 4-12 2 7h6"/></svg>Dieta</button>
   <button class="navbtn" data-view="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>Áreas</button>
 </nav>
@@ -336,6 +336,23 @@ create policy "anon full" on items
   </div>
 </div>
 
+<!-- Modal gerir contas -->
+<div class="overlay" id="mContas">
+  <div class="sheet">
+    <h2>Gerir contas</h2>
+    <p class="hint">O "saldo inicial" é o que tens agora nessa conta. Os movimentos que adicionares ajustam o saldo a partir daí.</p>
+    <div id="contasList"></div>
+    <div class="divider"></div>
+    <div class="section-t" style="margin-top:0">Adicionar conta</div>
+    <div class="trow">
+      <input id="nc_name" placeholder="Nome (ex: Revolut)" style="flex:2">
+      <input id="nc_open" type="number" step="0.01" placeholder="saldo inicial" style="flex:1.2">
+    </div>
+    <button class="btn ghost" id="contasAdd" style="width:100%">Adicionar conta</button>
+    <div class="actions"><button class="btn primary" id="contasClose" style="flex:1">Concluído</button></div>
+  </div>
+</div>
+
 <!-- Modal editar um dia -->
 <div class="overlay" id="mDay">
   <div class="sheet">
@@ -401,7 +418,7 @@ function dbPut(it){ return new Promise((res)=>{ tx('readwrite').put(it).onsucces
 function dbGet(id){ return new Promise((res)=>{ tx('readonly').get(id).onsuccess=e=>res(e.target.result); }); }
 
 /* ---------- estado ---------- */
-let state = { view:'hoje', area:'Todas', type:'Todos', done:'abertas', q:'', editing:null };
+let state = { view:'hoje', area:'Todas', type:'Todos', done:'abertas', month:'', q:'', editing:null };
 const STATUSES=[{k:'abertas',label:'Por fazer'},{k:'feitas',label:'Feitas'},{k:'todas',label:'Todas'}];
 const $ = s => document.querySelector(s);
 const todayISO = () => new Date().toISOString().slice(0,10);
@@ -418,7 +435,7 @@ async function render(){
   $('#chipType').style.display = state.view==='tudo' ? 'flex':'none';
   $('#chipStatus').style.display = state.view==='tudo' ? 'flex':'none';
 
-  if(state.view==='diario'){ return renderDiario(all); }
+  if(state.view==='despesas'){ return renderDespesas(all); }
   if(state.view==='dieta'){ return renderDieta(all); }
   if(state.view==='stats'){ t.textContent='Áreas'; sub.textContent='Distribuição por área'; return renderStats(items); }
 
@@ -896,6 +913,115 @@ async function renderDieta(all){
   }
 }
 
+/* ---------- Despesas / finanças ---------- */
+const eur=v=>(v||0).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
+const MESES_LONG=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function curMonth(){ return todayISO().slice(0,7); }
+function monthLabel(ym){ const [y,m]=ym.split('-'); return MESES_LONG[parseInt(m)-1]+' '+y; }
+function shiftMonth(ym,delta){ const [y,m]=ym.split('-').map(Number); const d=new Date(y,m-1+delta,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+const DEFAULT_CONTAS=[
+  {id:'moey',name:'Moey',opening:0},{id:'t212',name:'Trading 212',opening:0},
+  {id:'active',name:'ActiveBank',opening:0},{id:'montepio',name:'Montepio',opening:0},{id:'dinheiro',name:'Dinheiro',opening:0}
+];
+let CONTAS=DEFAULT_CONTAS.slice();
+async function loadContas(){ const it=await dbGet('cfg-contas'); if(it&&it.notes){ try{ const a=JSON.parse(it.notes); if(Array.isArray(a)) CONTAS=a; }catch(e){} } return CONTAS; }
+async function saveContas(){ const now=Date.now(); await dbPut({id:'cfg-contas',type:'Config',area:'Pessoal',priority:'Baixa',status:'aberto',title:'contas',due:'',url:'',notes:JSON.stringify(CONTAS),deleted:false,createdAt:now,updatedAt:now}); scheduleSync(); }
+function getTx(all){ return all.filter(i=>i.type==='Tx').map(i=>{ let d={}; try{d=JSON.parse(i.notes||'{}');}catch(e){} return {id:i.id,date:i.due,...d}; }); }
+async function saveTx(tx){
+  const id=tx.id||('tx-'+crypto.randomUUID()); const now=Date.now(); let it=await dbGet(id); if(!it) it={id,createdAt:now};
+  it.type='Tx'; it.area='Pessoal'; it.priority='Baixa'; it.status='aberto'; it.due=tx.date; it.title=tx.date; it.url='';
+  it.notes=JSON.stringify({amount:tx.amount,kind:tx.kind,account:tx.account,category:tx.category||'',note:tx.note||''});
+  it.updatedAt=now; it.deleted=false; await dbPut(it); scheduleSync();
+}
+async function deleteTx(id){ const it=await dbGet(id); if(it){ it.deleted=true; it.updatedAt=Date.now(); await dbPut(it); scheduleSync(); } }
+function contaSaldo(c,txs){ let s=Number(c.opening)||0; for(const t of txs){ if(t.account===c.id) s += (t.kind==='in'? t.amount : -t.amount); } return s; }
+function totalDinheiro(txs){ return CONTAS.reduce((a,c)=>a+contaSaldo(c,txs),0); }
+function contaName(id){ const c=CONTAS.find(x=>x.id===id); return c?c.name:'—'; }
+async function saveTxFromForm(){
+  const amount=Number($('#tx_amount').value); if(!amount||amount<=0){ $('#tx_amount').focus(); return; }
+  const on=$('#txKind .pill.on'); const kind=on?on.dataset.kind:'out';
+  await saveTx({ id:$('#tx_id').value||null, date:$('#tx_date').value||todayISO(), amount, kind,
+    account:$('#tx_account').value, category:$('#tx_category').value.trim(), note:$('#tx_note').value.trim() });
+  render();
+}
+function fillTxForm(t){
+  $('#tx_id').value=t.id; $('#tx_amount').value=t.amount; $('#tx_date').value=t.date;
+  $('#tx_account').value=t.account; $('#tx_category').value=t.category||''; $('#tx_note').value=t.note||'';
+  $('#txKind').querySelectorAll('.pill').forEach(p=>p.classList.toggle('on',p.dataset.kind===t.kind));
+  const b=$('#tx_save'); if(b) b.textContent='Atualizar movimento';
+  try{ $('#tx_amount').scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+}
+function openContas(){ loadContas().then(()=>{ renderContasList(); $('#mContas').classList.add('show'); }); }
+function renderContasList(){
+  $('#contasList').innerHTML=CONTAS.length?CONTAS.map((c,i)=>
+    `<div class="trow"><input value="${esc(c.name)}" data-ci="${i}" class="contaname" style="flex:2"><input type="number" step="0.01" value="${Number(c.opening)||0}" data-ci="${i}" class="contaopen" style="flex:1.2" title="saldo inicial"><button class="linkbtn" data-cdel="${i}" style="color:var(--alta)">✕</button></div>`
+  ).join(''):'<p class="small">Sem contas. Adiciona abaixo.</p>';
+}
+async function renderDespesas(all){
+  await loadContas();
+  const txs=getTx(all);
+  if(!state.month) state.month=curMonth();
+  const ym=state.month;
+  $('#viewTitle').textContent='Despesas'; $('#viewSub').textContent=monthLabel(ym);
+  const monthTx=txs.filter(t=>t.date&&t.date.slice(0,7)===ym).sort((a,b)=>b.date.localeCompare(a.date));
+  const ganhos=monthTx.filter(t=>t.kind==='in').reduce((a,t)=>a+t.amount,0);
+  const gastos=monthTx.filter(t=>t.kind==='out').reduce((a,t)=>a+t.amount,0);
+  const total=totalDinheiro(txs);
+  const el=$('#list');
+  el.innerHTML=`
+    <div class="card kpi" style="text-align:center">
+      <div class="klabel">Total em contas</div><div class="kval" style="font-size:30px">${eur(total)}</div>
+      <div class="small">${CONTAS.length} conta(s)</div>
+    </div>
+    <div class="card" style="display:block">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <button class="linkbtn" id="mPrev" style="font-size:20px">‹</button>
+        <strong>${monthLabel(ym)}</strong>
+        <button class="linkbtn" id="mNext" style="font-size:20px">›</button>
+      </div>
+      <div class="kpis" style="margin:12px 0 0">
+        <div class="card kpi" style="box-shadow:none"><div class="klabel">Ganhos</div><div class="kval" style="color:#3f9e6f;font-size:20px">${eur(ganhos)}</div></div>
+        <div class="card kpi" style="box-shadow:none"><div class="klabel">Gastos</div><div class="kval" style="color:#d0453f;font-size:20px">${eur(gastos)}</div></div>
+      </div>
+      <div class="small" style="text-align:center; margin-top:8px">Saldo do mês: <strong style="color:${ganhos-gastos>=0?'#3f9e6f':'#d0453f'}">${eur(ganhos-gastos)}</strong></div>
+    </div>
+    <div class="card" style="display:block">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+        <div class="section-t" style="margin:0">Onde está o dinheiro</div>
+        <button class="linkbtn" id="btnContas">Gerir contas</button>
+      </div>
+      ${CONTAS.map(c=>`<div class="dietrow"><span class="lab">${esc(c.name)}</span><span>${eur(contaSaldo(c,txs))}</span></div>`).join('')||'<p class="small">Sem contas.</p>'}
+    </div>
+    <div class="card" style="display:block">
+      <div class="section-t" style="margin-top:0">Adicionar movimento</div>
+      <div class="pillsel" id="txKind" style="margin-bottom:12px">
+        <div class="pill on" data-kind="out">Despesa</div>
+        <div class="pill" data-kind="in">Ganho</div>
+      </div>
+      <div class="form2">
+        <div><label>Valor (€)</label><input id="tx_amount" type="number" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+        <div><label>Data</label><input id="tx_date" type="date"></div>
+        <div><label>Conta</label><select id="tx_account">${CONTAS.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
+        <div><label>Categoria</label><input id="tx_category" placeholder="ex: alimentação"></div>
+      </div>
+      <label style="margin-top:10px">Nota</label>
+      <input id="tx_note" placeholder="opcional">
+      <input type="hidden" id="tx_id">
+      <button class="btn primary" id="tx_save" style="width:100%; margin-top:12px">Guardar movimento</button>
+    </div>
+    <div class="card" style="display:block">
+      <div class="section-t" style="margin-top:0">Movimentos · ${monthLabel(ym)}</div>
+      <div id="txList">${monthTx.length?monthTx.map(t=>`
+        <div class="dietrow" data-tx="${t.id}" style="cursor:pointer">
+          <span class="lab"><strong style="color:${t.kind==='in'?'#3f9e6f':'#d0453f'}">${t.kind==='in'?'+':'−'} ${eur(t.amount)}</strong> · ${esc(contaName(t.account))}${t.category?' · '+esc(t.category):''}<div class="small">${fmtFull(t.date)}${t.note?' · '+esc(t.note):''}</div></span>
+          <button class="linkbtn" data-tx-del="${t.id}" style="color:var(--alta)">Apagar</button>
+        </div>`).join(''):'<p class="small">Sem movimentos neste mês.</p>'}
+      </div>
+    </div>
+  `;
+  $('#tx_date').value=todayISO();
+}
+
 /* ---------- eventos ---------- */
 function bind(){
   document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>{
@@ -909,6 +1035,15 @@ function bind(){
   $('#mItem').onclick=e=>{ if(e.target===$('#mItem')) $('#mItem').classList.remove('show'); };
 
   $('#list').addEventListener('click',e=>{
+    // --- despesas ---
+    if(e.target.closest('#mPrev')){ state.month=shiftMonth(state.month||curMonth(),-1); render(); return; }
+    if(e.target.closest('#mNext')){ state.month=shiftMonth(state.month||curMonth(),1); render(); return; }
+    if(e.target.closest('#btnContas')){ openContas(); return; }
+    if(e.target.closest('#tx_save')){ saveTxFromForm(); return; }
+    const kp=e.target.closest('#txKind .pill'); if(kp){ $('#txKind').querySelectorAll('.pill').forEach(p=>p.classList.toggle('on',p===kp)); return; }
+    const txdel=e.target.closest('[data-tx-del]'); if(txdel){ deleteTx(txdel.dataset.txDel).then(render); return; }
+    const txe=e.target.closest('[data-tx]'); if(txe){ dbGet(txe.dataset.tx).then(it=>{ if(it){ let d={}; try{d=JSON.parse(it.notes||'{}');}catch(_){} fillTxForm({id:it.id,date:it.due,...d}); } }); return; }
+    // --- diário/dieta ---
     if(e.target.closest('#btnTrk')){ openTrk(); return; }
     if(e.target.closest('#di_save')){ saveDietaFromForm(); return; }
     if(e.target.closest('#di_export')){ exportDietaJSON(); return; }
@@ -973,6 +1108,20 @@ function bind(){
   $('#trkList').addEventListener('input',e=>{ const nm=e.target.closest('.trkname'); if(nm){ TRK[parseInt(nm.dataset.ti)].name=nm.value; clearTimeout(logSyncTimer); logSyncTimer=setTimeout(saveTrackers,500); } });
   $('#trkClose').onclick=()=>{ saveTrackers(); $('#mTrk').classList.remove('show'); render(); };
   $('#mTrk').onclick=e=>{ if(e.target===$('#mTrk')){ saveTrackers(); $('#mTrk').classList.remove('show'); render(); } };
+
+  // despesas — gerir contas
+  $('#contasAdd').onclick=()=>{
+    const n=$('#nc_name').value.trim(); if(!n) return;
+    CONTAS.push({id:'c_'+Date.now(), name:n, opening:Number($('#nc_open').value)||0});
+    $('#nc_name').value=''; $('#nc_open').value=''; saveContas(); renderContasList();
+  };
+  $('#contasList').addEventListener('click',e=>{ const d=e.target.closest('[data-cdel]'); if(d){ CONTAS.splice(+d.dataset.cdel,1); saveContas(); renderContasList(); } });
+  $('#contasList').addEventListener('input',e=>{
+    const nm=e.target.closest('.contaname'); if(nm){ CONTAS[+nm.dataset.ci].name=nm.value; clearTimeout(logSyncTimer); logSyncTimer=setTimeout(saveContas,500); return; }
+    const op=e.target.closest('.contaopen'); if(op){ CONTAS[+op.dataset.ci].opening=Number(op.value)||0; clearTimeout(logSyncTimer); logSyncTimer=setTimeout(saveContas,500); }
+  });
+  $('#contasClose').onclick=async()=>{ await saveContas(); $('#mContas').classList.remove('show'); render(); };
+  $('#mContas').onclick=async e=>{ if(e.target===$('#mContas')){ await saveContas(); $('#mContas').classList.remove('show'); render(); } };
 }
 
 /* ---------- seed (primeira utilização) ---------- */
