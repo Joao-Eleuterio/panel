@@ -1,6 +1,6 @@
 // Service worker — cache offline da PWA Painel
 // Estratégia: HTML sempre "network-first" (para receberes updates); restantes assets "cache-first".
-const CACHE = 'painel-v3';
+const CACHE = 'painel-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -46,16 +46,20 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // outros assets same-origin: cache-first com atualização em fundo
   if (url.origin === self.location.origin) {
-    e.respondWith(
-      caches.match(req).then((cached) =>
-        cached ||
-        fetch(req).then((res) => {
-          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
-          return res;
-        })
-      )
-    );
+    const isCode = req.destination === 'script' || req.destination === 'style';
+    if (isCode) {
+      // Codigo network-first: novas versoes aparecem logo apos cada deploy.
+      e.respondWith(fetch(req).then((res) => {
+        if (res.ok) { const copy=res.clone(); caches.open(CACHE).then((c)=>c.put(req,copy)); }
+        return res;
+      }).catch(()=>caches.match(req)));
+      return;
+    }
+    // Imagens e restantes recursos estaveis continuam cache-first.
+    e.respondWith(caches.match(req).then((cached)=>cached||fetch(req).then((res)=>{
+      if(res.ok){const copy=res.clone();caches.open(CACHE).then((c)=>c.put(req,copy));}
+      return res;
+    })));
   }
 });
