@@ -187,6 +187,11 @@
   .trow{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }
   .trow .emo{ font-size:18px; width:22px; text-align:center; }
   .small{ font-size:12px; color:var(--mut); }
+  .home-switch{ display:flex; gap:4px; width:max-content; margin-bottom:14px; padding:3px;
+    border:1px solid var(--line); border-radius:10px; background:var(--panel2); }
+  .home-switch button{ border:0; background:transparent; color:var(--mut); padding:7px 14px;
+    border-radius:7px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+  .home-switch button.on{ background:var(--panel); color:var(--txt); box-shadow:0 1px 3px rgba(16,24,40,.08); }
   .kpis{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px; }
   .kpi{ padding:14px 16px; display:block; }
   .klabel{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); font-weight:600; }
@@ -216,6 +221,10 @@
 </header>
 
 <main>
+  <div class="home-switch" id="homeSwitch">
+    <button class="on" data-home-view="hoje">Em foco</button>
+    <button data-home-view="tudo">Ver tudo</button>
+  </div>
   <div class="chips" id="chipArea" style="display:none"></div>
   <div class="chips" id="chipType" style="display:none"></div>
   <div class="chips" id="chipStatus" style="display:none"></div>
@@ -226,10 +235,8 @@
 
 <nav>
   <button class="navbtn on" data-view="hoje"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 1.5"/></svg>Hoje</button>
-  <button class="navbtn" data-view="tudo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>Tudo</button>
   <button class="navbtn" data-view="despesas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/></svg>Despesas</button>
   <button class="navbtn" data-view="dieta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 5 4-12 2 7h6"/></svg>Dieta</button>
-  <button class="navbtn" data-view="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>Áreas</button>
 </nav>
 
 <!-- Modal item -->
@@ -430,6 +437,8 @@ async function render(){
   const all = (await dbAll()).filter(i=>!i.deleted);
   const items = all.filter(i=>TYPES.includes(i.type));   // só tarefas/notas/etc (esconde Log/Config)
   const t = $('#viewTitle'), sub = $('#viewSub');
+  $('#homeSwitch').style.display = (state.view==='hoje'||state.view==='tudo') ? 'flex':'none';
+  document.querySelectorAll('[data-home-view]').forEach(b=>b.classList.toggle('on',b.dataset.homeView===state.view));
   $('#search').style.display = state.view==='tudo' ? 'block':'none';
   $('#chipArea').style.display = state.view==='tudo' ? 'flex':'none';
   $('#chipType').style.display = state.view==='tudo' ? 'flex':'none';
@@ -448,7 +457,7 @@ async function render(){
     const overdue = list.filter(i=>i.due && i.due<todayISO()).length;
     sub.textContent = list.length? `${list.length} em foco${overdue?` · ${overdue} atrasado(s)`:''}` : 'Tudo em dia ✓';
   } else {
-    t.textContent='Tudo';
+    t.textContent='Hoje';
     list = items.filter(i=>
       (state.area==='Todas'||i.area===state.area) &&
       (state.type==='Todos'||i.type===state.type) &&
@@ -1027,6 +1036,10 @@ function bind(){
   document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('on'));
     b.classList.add('on'); state.view=b.dataset.view; window.scrollTo(0,0); render();
+  });
+  $('#homeSwitch').addEventListener('click',e=>{
+    const b=e.target.closest('[data-home-view]'); if(!b) return;
+    state.view=b.dataset.homeView; window.scrollTo(0,0); render();
   });
   $('#fab').onclick=()=>{ if(state.view==='diario'){ const ta=$('#diaryToday'); if(ta) ta.focus(); return; } openItem(null); };
   $('#mItemCancel').onclick=()=>$('#mItem').classList.remove('show');
