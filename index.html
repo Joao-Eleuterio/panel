@@ -204,6 +204,8 @@
   .dietrow:last-child{ border-bottom:0; }
   .dietrow .lab{ flex:1; font-size:14px; }
 </style>
+  <link rel="stylesheet" href="challenge75.css">
+  <script src="challenge75.js"></script>
 </head>
 <body>
 <header>
@@ -235,6 +237,7 @@
 
 <nav>
   <button class="navbtn on" data-view="hoje"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 1.5"/></svg>Hoje</button>
+  <button class="navbtn" data-view="challenge75"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16 9"/><path d="M12 3v3"/></svg>75 Jo&#227;o</button>
   <button class="navbtn" data-view="despesas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/></svg>Despesas</button>
   <button class="navbtn" data-view="dieta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 5 4-12 2 7h6"/></svg>Dieta</button>
 </nav>
@@ -444,6 +447,8 @@ async function render(){
   $('#chipType').style.display = state.view==='tudo' ? 'flex':'none';
   $('#chipStatus').style.display = state.view==='tudo' ? 'flex':'none';
 
+  if(state.view==='challenge75'){ t.textContent='75 Jo\u00e3o'; sub.textContent='Desafio de 75 dias'; $('#search').style.display='none'; $('#chipArea').style.display='none'; $('#chipType').style.display='none'; $('#chipStatus').style.display='none'; $('#fab').style.display='none'; await Challenge75.mount($('#list')); return; }
+  $('#fab').style.display='flex';
   if(state.view==='despesas'){ return renderDespesas(all); }
   if(state.view==='dieta'){ return renderDieta(all); }
   if(state.view==='stats'){ t.textContent='Áreas'; sub.textContent='Distribuição por área'; return renderStats(items); }

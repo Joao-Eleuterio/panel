@@ -50,3 +50,13 @@ git push
 
 Sem sessão iniciada, a base não é acessível (nem leitura nem escrita).
 A confirmação de email está ligada — ao criar conta, confirma pelo link e depois entra.
+
+## Módulo 75 João
+
+O separador **75 João** implementa o desafio de 75 dias iniciado em 13/08/2026.
+
+- Dados do desafio: IndexedDB `challenge75` e espelho de metadados no sistema de sync existente.
+- Fotografias: blobs privados, apenas no dispositivo, nunca incluídos no backup/exportação normal.
+- Testes: abrir `challenge75.test.html` num browser; o título deve ficar `OK`.
+- Lembretes: Web Notifications condicionais enquanto a PWA está em execução. Uma PWA estática no iOS não agenda notificações locais fiáveis com a app fechada; isso exigiria backend Web Push/APNs.
+- A data é calculada por dias civis em `Europe/Lisbon`, sem dividir milissegundos por 24 horas.

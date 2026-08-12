@@ -1,0 +1,18 @@
+<!doctype html><html lang="pt"><meta charset="utf-8"><title>Testes 75 João</title><style>body{font:15px system-ui;padding:24px}.ok{color:#087a39}.bad{color:#b42318}</style><body><h1>Testes 75 João</h1><div id="out"></div><script src="challenge75.js"></script><script>
+const out=document.querySelector('#out');let pass=0,fail=0;
+function test(name,fn){try{if(!fn())throw Error('resultado falso');out.innerHTML+=`<p class="ok">✓ ${name}</p>`;pass++}catch(e){out.innerHTML+=`<p class="bad">✗ ${name}: ${e.message}</p>`;fail++}}
+const T=Challenge75.tests;
+test('Dia 1 é 13/08/2026',()=>T.dayNumber('2026-08-13')===1);
+test('Dia 75 é 26/10/2026',()=>T.dayNumber('2026-10-26')===75);
+test('Mudança de hora mantém dias civis consecutivos',()=>T.addDays('2026-10-24',1)==='2026-10-25'&&T.addDays('2026-10-25',1)==='2026-10-26');
+test('Quinta-feira apresenta Upper B',()=>T.weekday('2026-08-13')===4);
+test('Um dia adicional desloca conclusão',()=>T.plannedEnd(1)==='2026-10-27');
+test('Pausa de saúde desloca conclusão como dia adicional',()=>T.plannedEnd(2)==='2026-10-28');
+const d={walk:{done:true,minutes:45},session:{done:true,minutes:45},water:[{ml:2750}],nutrition:{calories:2500,protein:140},reading:{pages:10},photo:true,alcohol:true,sleep:{minutes:450}};
+test('Calorias fora da faixa não impedem conclusão',()=>T.completion(d).done===T.completion(d).total);
+d.water=[];test('Água em falta impede conclusão',()=>T.completion(d).missing.includes('water'));
+const rd={water:[],nutrition:{protein:0},photo:false,session:{done:false}};
+test('Lembretes ignoram tarefas concluidas',()=>{rd.photo=true;return !T.testReminderCandidates(rd,'18:00').includes('photo')});
+test('Maximo de quatro lembretes por dia',()=>T.testReminderCandidates(rd,'23:00').length<=4);
+out.innerHTML+=`<hr><b>${pass} passaram · ${fail} falharam</b>`;document.title=fail?'FALHOU':'OK';
+</script></body></html>
