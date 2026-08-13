@@ -1,6 +1,6 @@
 // Service worker — cache offline da PWA Painel
 // Estratégia: HTML sempre "network-first" (para receberes updates); restantes assets "cache-first".
-const CACHE = 'painel-v6';
+const CACHE = 'painel-v7';
 const ASSETS = [
   './',
   './index.html',
