@@ -11,6 +11,8 @@ test('Pausa de saúde desloca conclusão como dia adicional',()=>T.plannedEnd(2)
 const d={walk:{done:true,minutes:45},session:{done:true,minutes:45},water:[{ml:2750}],nutrition:{calories:2500,protein:140},reading:{pages:10},photo:true,alcohol:true,sleep:{minutes:450}};
 test('Calorias fora da faixa não impedem conclusão',()=>T.completion(d).done===T.completion(d).total);
 d.water=[];test('Água em falta impede conclusão',()=>T.completion(d).missing.includes('water'));
+test('Fotografia e opcional',()=>{const x={...d,water:[{ml:2750}],photo:false};return !T.completion(x).missing.includes('photo')});
+test('Sono de 7h30 conclui a tarefa',()=>{const x={...d,water:[{ml:2750}],sleep:{minutes:450}};return !T.completion(x).missing.includes('sleep')});
 const rd={water:[],nutrition:{protein:0},photo:false,session:{done:false}};
 test('Lembretes ignoram tarefas concluidas',()=>{rd.photo=true;return !T.testReminderCandidates(rd,'18:00').includes('photo')});
 test('Maximo de quatro lembretes por dia',()=>T.testReminderCandidates(rd,'23:00').length<=4);
