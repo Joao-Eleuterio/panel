@@ -37,14 +37,42 @@ const WO_PLAN={
 };
 
 let wo={person:'joao',tab:'plan',session:null};
+let woRoot=null, woDb=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const personName=p=>p==='namorada'?'Namorada':'João';
 const today=()=>new Date().toISOString().slice(0,10);
 
-async function rows(){
-  if(typeof window.dbAll!=='function') return [];
-  return (await window.dbAll()).filter(x=>!x.deleted&&x.type==='Workout');
+function openPainelDB(){
+  if(woDb) return Promise.resolve(woDb);
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open('painel',1);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('items')) d.createObjectStore('items',{keyPath:'id'});
+    };
+    req.onsuccess=e=>{woDb=e.target.result;resolve(woDb)};
+    req.onerror=()=>reject(req.error||new Error('Não foi possível abrir a base de dados do painel.'));
+  });
 }
+async function workoutRows(){
+  const d=await openPainelDB();
+  return new Promise((resolve,reject)=>{
+    const req=d.transaction('items','readonly').objectStore('items').getAll();
+    req.onsuccess=()=>resolve((req.result||[]).filter(x=>!x.deleted&&x.type==='Workout'));
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function workoutPut(row){
+  const d=await openPainelDB();
+  await new Promise((resolve,reject)=>{
+    const req=d.transaction('items','readwrite').objectStore('items').put(row);
+    req.onsuccess=()=>resolve();
+    req.onerror=()=>reject(req.error);
+  });
+  try{ if(typeof window.scheduleSync==='function') window.scheduleSync(); }catch(_){}
+}
+async function rows(){ return workoutRows(); }
+
 function parseRow(r){try{return JSON.parse(r.notes||'{}')}catch{return {}}}
 async function history(person=wo.person){
   return (await rows()).map(r=>({row:r,data:parseRow(r)})).filter(x=>x.data.person===person).sort((a,b)=>(b.row.due||'').localeCompare(a.row.due||'')||(+b.row.updatedAt||0)-(+a.row.updatedAt||0));
@@ -64,7 +92,8 @@ function shell(body){return `<div class="workout"><div class="wo-people"><button
 
 async function renderWorkout(){
   chrome('Treino','Hipertrofia · registo de cargas e repetições');
-  const list=document.querySelector('#list');
+  const list=woRoot||document.querySelector('#list');
+  if(!list) return;
   if(wo.session) return renderSession(list);
   if(wo.tab==='history') return renderHistory(list);
   const h=await history();
@@ -96,7 +125,7 @@ async function saveSession(plan,list){
   if(!hasAny){list.querySelector('#woStatus').innerHTML='<div class="wo-muted">Preenche pelo menos uma série antes de guardar.</div>';return}
   const now=Date.now(),data={person:wo.person,dayId:plan.id,day:plan.day,name:plan.name,date,exercises,notes:list.querySelector('#woNotes').value.trim(),createdAt:now};
   const row={id:`workout-${wo.person}-${now}-${Math.random().toString(36).slice(2,7)}`,title:`Treino ${personName(wo.person)} · ${plan.name}`,area:'Pessoal',type:'Workout',priority:'Baixa',due:date,status:'feito',notes:JSON.stringify(data),url:'',deleted:false,createdAt:now,updatedAt:now};
-  await window.dbPut(row);if(window.scheduleSync)window.scheduleSync();
+  await workoutPut(row);
   wo.session=null;wo.tab='history';await renderWorkout();
 }
 
@@ -113,5 +142,5 @@ function bindCommon(list){
   list.querySelectorAll('[data-wo-tab]').forEach(b=>b.onclick=()=>{wo.tab=b.dataset.woTab;wo.session=null;renderWorkout()});
 }
 
-window.Workout={mount:renderWorkout};
+window.Workout={mount:async function(el){woRoot=el||document.querySelector('#list');try{await openPainelDB();await renderWorkout()}catch(e){console.error('Workout',e);if(woRoot)woRoot.innerHTML=`<div class=\"wo-empty\">Erro ao abrir Treino: ${esc(e.message||e)}</div>`}}};
 })();

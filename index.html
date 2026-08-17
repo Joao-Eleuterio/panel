@@ -608,7 +608,7 @@ async function render(){
   $('#chipStatus').style.display = state.view==='tudo' ? 'flex':'none';
 
   if(state.view==='challenge75'){ t.textContent='75 Jo\u00e3o'; sub.textContent='Desafio de 75 dias'; $('#search').style.display='none'; $('#chipArea').style.display='none'; $('#chipType').style.display='none'; $('#chipStatus').style.display='none'; $('#fab').style.display='none'; await Challenge75.mount($('#list')); return; }
-  if(state.view==='treino'){ $('#fab').style.display='none'; await Workout.mount($('#list')); return; }
+  if(state.view==='treino'){ $('#fab').style.display='none'; if(window.Workout&&typeof window.Workout.mount==='function'){ await window.Workout.mount($('#list')); } else { t.textContent='Treino'; sub.textContent='Módulo indisponível'; $('#list').innerHTML='<div class=\"empty\">Não foi possível carregar workout.js. Atualiza a página e confirma que workout.js está na mesma pasta do index.html.</div>'; } return; }
   $('#fab').style.display='flex';
   if(state.view==='despesas'){ return renderDespesas(all); }
   if(state.view==='dieta'){ return renderDieta(all); }
