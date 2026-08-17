@@ -277,7 +277,9 @@
 
 </style>
   <link rel="stylesheet" href="challenge75.css">
+  <link rel="stylesheet" href="workout.css">
   <script src="challenge75.js"></script>
+  <script src="workout.js"></script>
 <style id="fab-geometry-fix">
 /* FAB geometry fix */
 .fab{
@@ -397,6 +399,7 @@ input,select,textarea,.c75-field input,.c75-field textarea,.c75-field select{bac
   <button class="navbtn" data-view="challenge75"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16 9"/><path d="M12 3v3"/></svg>75 Jo&#227;o</button>
   <button class="navbtn" data-view="despesas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/></svg>Despesas</button>
   <button class="navbtn" data-view="dieta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 5 4-12 2 7h6"/></svg>Dieta</button>
+  <button class="navbtn" data-view="treino"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6M4 10v4M20 10v4"/></svg>Treino</button>
 </nav>
 
 <!-- Modal item -->
@@ -605,6 +608,7 @@ async function render(){
   $('#chipStatus').style.display = state.view==='tudo' ? 'flex':'none';
 
   if(state.view==='challenge75'){ t.textContent='75 Jo\u00e3o'; sub.textContent='Desafio de 75 dias'; $('#search').style.display='none'; $('#chipArea').style.display='none'; $('#chipType').style.display='none'; $('#chipStatus').style.display='none'; $('#fab').style.display='none'; await Challenge75.mount($('#list')); return; }
+  if(state.view==='treino'){ $('#fab').style.display='none'; await Workout.mount($('#list')); return; }
   $('#fab').style.display='flex';
   if(state.view==='despesas'){ return renderDespesas(all); }
   if(state.view==='dieta'){ return renderDieta(all); }

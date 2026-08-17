@@ -1,6 +1,6 @@
 // Service worker — cache offline da PWA Painel
 // Estratégia: HTML sempre "network-first" (para receberes updates); restantes assets "cache-first".
-const CACHE = 'painel-v10';
+const CACHE = 'painel-v11';
 const ASSETS = [
   './',
   './index.html',
@@ -9,7 +9,9 @@ const ASSETS = [
   './icon-check-512.png',
   './apple-touch-icon-check.png',
   './challenge75.js',
-  './challenge75.css'
+  './challenge75.css',
+  './workout.js',
+  './workout.css'
 ];
 
 self.addEventListener('install', (e) => {
