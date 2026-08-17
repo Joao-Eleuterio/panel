@@ -277,9 +277,133 @@
 
 </style>
   <link rel="stylesheet" href="challenge75.css">
-  <link rel="stylesheet" href="workout.css">
+  <style id="workout-inline">
+/* Treino — módulo de hipertrofia */
+.workout{max-width:620px;margin:0 auto}.wo-tabs,.wo-people{display:flex;gap:18px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}.wo-tabs button,.wo-people button{background:transparent;border:0;color:var(--mut);padding:9px 1px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}.wo-tabs button.on,.wo-people button.on{color:var(--txt);box-shadow:inset 0 -2px var(--acc)}.wo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.wo-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;cursor:pointer}.wo-card:hover{border-color:#3a3d44}.wo-card h3{margin:0 0 4px;font-size:15px}.wo-muted{color:var(--mut);font-size:12px;line-height:1.45}.wo-day{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-bottom:5px}.wo-session-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.wo-session-head h2{font-size:20px;margin:0}.wo-back{background:transparent;border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:7px 10px;cursor:pointer}.wo-date{max-width:180px}.wo-ex{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:10px}.wo-ex-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px}.wo-ex-name{font-weight:650;font-size:14px}.wo-target{font-size:11px;color:var(--mut);white-space:nowrap}.wo-prev{font-size:11px;color:var(--mut);margin:4px 0 10px}.wo-set-head,.wo-set{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center}.wo-set-head{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}.wo-set{margin-bottom:7px}.wo-set span{font-size:12px;color:var(--mut)}.wo-set input{padding:9px 10px;font-size:14px}.wo-actions{display:flex;gap:9px;margin:14px 0}.wo-btn{flex:1;border:1px solid var(--line);background:var(--panel);color:var(--txt);padding:11px 12px;border-radius:8px;font-weight:650;cursor:pointer}.wo-btn.primary{background:#ececea;color:#111214;border-color:#ececea}.wo-note{margin-top:10px}.wo-history-item{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:9px;overflow:hidden}.wo-history-head{padding:12px 13px;display:flex;justify-content:space-between;gap:10px;cursor:pointer}.wo-history-title{font-weight:650;font-size:14px}.wo-history-body{display:none;border-top:1px solid var(--line);padding:12px 13px}.wo-history-item.open .wo-history-body{display:block}.wo-history-ex{padding:8px 0;border-bottom:1px solid var(--line)}.wo-history-ex:last-child{border-bottom:0}.wo-history-sets{font-size:12px;color:var(--mut);margin-top:4px}.wo-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.wo-kpi{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px}.wo-kpi small{display:block;color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.05em}.wo-kpi b{display:block;font-size:17px;margin-top:4px}.wo-empty{text-align:center;color:var(--mut);padding:40px 16px}.wo-status{font-size:12px;color:var(--ok);margin-top:8px}.wo-person-tag{font-size:11px;color:var(--mut)}
+@media(max-width:520px){.wo-grid{grid-template-columns:1fr}.wo-kpis{grid-template-columns:1fr 1fr}.wo-set-head,.wo-set{grid-template-columns:34px minmax(0,1fr) minmax(0,1fr)}.wo-actions{flex-direction:column}.wo-date{max-width:none;width:100%}.wo-session-head{flex-direction:column}.wo-back{align-self:flex-start}}
+
+  </style>
   <script src="challenge75.js"></script>
-  <script src="workout.js"></script>
+  <script id="workout-inline-script">
+(function(){
+'use strict';
+
+const WO_PLAN={
+  joao:[
+    {id:'d1',day:'Dia 1',name:'Peito + Ombros + Bíceps',ex:[
+      ['Supino reto',3,'6–10'],['Supino inclinado',3,'8–12'],['Crucifixo / Flyes',3,'10–15'],
+      ['Elevação lateral',3,'12–20'],['Desenvolvimento de ombros máquina',3,'8–12'],
+      ['Rosca martelo',3,'8–12'],['Bíceps curl com halteres',3,'10–15']]},
+    {id:'d2',day:'Dia 2',name:'Pernas + Abdominais',ex:[
+      ['Agachamento',3,'6–10'],['Leg Press',3,'8–12'],['Cadeira extensora',3,'10–15'],
+      ['Leg Curl',3,'10–15'],['Gémeos na Leg Press',3,'12–20'],['Cable Crunch',3,'10–15'],
+      ['Elevação de pernas / joelhos',3,'10–15']]},
+    {id:'d3',day:'Dia 3',name:'Costas + Tríceps',ex:[
+      ['Puxada alta na polia',3,'8–12'],['Remada baixa máquina',3,'8–12'],['Barra fixa',3,'6–10'],
+      ['Tríceps na polia',3,'10–15'],['Tríceps francês com halter',3,'10–15']]},
+    {id:'d4',day:'Dia 4',name:'Pesado + Full Body',ex:[
+      ['Leg Press',3,'6–8'],['Desenvolvimento de ombros máquina',3,'6–8'],['Remada baixa máquina',3,'6–8'],
+      ['Barra fixa',3,'6–8'],['Crucifixo / Flyes',3,'10–15'],['Bíceps curl',3,'8–12'],['Tríceps na polia',3,'8–12']]}
+  ],
+  namorada:[
+    {id:'d1',day:'Dia 1',name:'Peito + Ombros + Bíceps',ex:[
+      ['Supino reto',3,'6–10'],['Supino inclinado',3,'8–12'],['Crucifixo / Flyes',3,'10–15'],
+      ['Elevação lateral',3,'12–20'],['Desenvolvimento de ombros máquina',3,'8–12'],
+      ['Rosca martelo',3,'8–12'],['Bíceps curl com halteres',3,'10–15']]},
+    {id:'d2',day:'Dia 2',name:'Pernas + Abdominais',ex:[
+      ['Agachamento',3,'6–10'],['Leg Press',3,'8–12'],['Cadeira extensora',3,'10–15'],
+      ['Leg Curl',3,'10–15'],['Gémeos na Leg Press',3,'12–20'],['Cable Crunch',3,'10–15'],
+      ['Elevação de pernas / joelhos',3,'10–15']]},
+    {id:'d3',day:'Dia 3',name:'Costas + Tríceps',ex:[
+      ['Puxada alta na polia',3,'8–12'],['Remada baixa máquina',3,'8–12'],['Barra fixa',3,'6–10'],
+      ['Tríceps na polia',3,'10–15'],['Tríceps francês com halter',3,'10–15']]},
+    {id:'d4',day:'Dia 4',name:'Glúteos',ex:[
+      ['Hip Thrust',4,'6–10'],['Búlgaro',3,'8–12 / perna'],['Stiff / Romanian Deadlift',3,'8–12'],
+      ['Cadeira abdutora',3,'12–20'],['Glute Kickback',3,'12–20 / perna']]}
+  ]
+};
+
+let wo={person:'joao',tab:'plan',session:null};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const personName=p=>p==='namorada'?'Namorada':'João';
+const today=()=>new Date().toISOString().slice(0,10);
+
+async function rows(){
+  if(typeof window.dbAll!=='function') return [];
+  return (await window.dbAll()).filter(x=>!x.deleted&&x.type==='Workout');
+}
+function parseRow(r){try{return JSON.parse(r.notes||'{}')}catch{return {}}}
+async function history(person=wo.person){
+  return (await rows()).map(r=>({row:r,data:parseRow(r)})).filter(x=>x.data.person===person).sort((a,b)=>(b.row.due||'').localeCompare(a.row.due||'')||(+b.row.updatedAt||0)-(+a.row.updatedAt||0));
+}
+async function previous(person,dayId){return (await history(person)).find(x=>x.data.dayId===dayId)}
+function fmtDate(iso){if(!iso)return '';const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`}
+function volumeOf(d){let v=0;for(const e of d.exercises||[])for(const s of e.sets||[]){const kg=+s.kg,reps=+s.reps;if(kg>0&&reps>0)v+=kg*reps}return v}
+function setSummary(e){return (e.sets||[]).filter(s=>s.kg||s.reps).map((s,i)=>`${i+1}: ${s.kg||'—'} kg × ${s.reps||'—'}`).join(' · ')||'Sem séries registadas'}
+
+function chrome(title,sub){
+  document.querySelector('#viewTitle').textContent=title;
+  document.querySelector('#viewSub').textContent=sub;
+  ['#homeSwitch','#search','#chipArea','#chipType','#chipStatus'].forEach(s=>{const x=document.querySelector(s);if(x)x.style.display='none'});
+  const f=document.querySelector('#fab');if(f)f.style.display='none';
+}
+function shell(body){return `<div class="workout"><div class="wo-people"><button data-wo-person="joao" class="${wo.person==='joao'?'on':''}">João</button><button data-wo-person="namorada" class="${wo.person==='namorada'?'on':''}">Namorada</button></div><div class="wo-tabs"><button data-wo-tab="plan" class="${wo.tab==='plan'?'on':''}">Plano</button><button data-wo-tab="history" class="${wo.tab==='history'?'on':''}">Histórico</button></div>${body}</div>`}
+
+async function renderWorkout(){
+  chrome('Treino','Hipertrofia · registo de cargas e repetições');
+  const list=document.querySelector('#list');
+  if(wo.session) return renderSession(list);
+  if(wo.tab==='history') return renderHistory(list);
+  const h=await history();
+  const count=h.length,last=h[0];
+  const cards=WO_PLAN[wo.person].map(d=>`<div class="wo-card" data-wo-day="${d.id}"><div class="wo-day">${d.day}</div><h3>${esc(d.name)}</h3><div class="wo-muted">${d.ex.length} exercícios · tocar para registar</div></div>`).join('');
+  list.innerHTML=shell(`<div class="wo-kpis"><div class="wo-kpi"><small>Treinos</small><b>${count}</b></div><div class="wo-kpi"><small>Último</small><b>${last?fmtDate(last.row.due):'—'}</b></div><div class="wo-kpi"><small>Pessoa</small><b style="font-size:14px">${personName(wo.person)}</b></div></div><div class="wo-grid">${cards}</div><div class="wo-muted" style="margin-top:12px">Nos exercícios compostos mantém normalmente 1–2 repetições em reserva. Aumenta a carga quando atingires o topo da gama de repetições com boa técnica.</div>`);
+  bindCommon(list);
+  list.querySelectorAll('[data-wo-day]').forEach(b=>b.onclick=()=>{wo.session=b.dataset.woDay;renderWorkout()});
+}
+
+async function renderSession(list){
+  const plan=WO_PLAN[wo.person].find(x=>x.id===wo.session);if(!plan){wo.session=null;return renderWorkout()}
+  const prev=await previous(wo.person,plan.id);
+  const pex=prev?.data?.exercises||[];
+  const ex=plan.ex.map(([name,sets,target],i)=>{
+    const old=pex.find(x=>x.name===name)||pex[i];
+    const setRows=Array.from({length:sets},(_,j)=>`<div class="wo-set"><span>S${j+1}</span><input type="number" min="0" step="0.5" inputmode="decimal" data-kg="${i}-${j}" placeholder="kg"><input type="number" min="0" step="1" inputmode="numeric" data-reps="${i}-${j}" placeholder="reps"></div>`).join('');
+    return `<div class="wo-ex"><div class="wo-ex-head"><div><div class="wo-ex-name">${esc(name)}</div></div><div class="wo-target">${sets} × ${target}</div></div>${old?`<div class="wo-prev">Anterior · ${esc(setSummary(old))}</div>`:''}<div class="wo-set-head"><span>Série</span><span>Peso</span><span>Reps</span></div>${setRows}</div>`
+  }).join('');
+  list.innerHTML=shell(`<div class="wo-session-head"><div><button class="wo-back" data-wo-back>← Plano</button><h2 style="margin-top:12px">${esc(plan.name)}</h2><div class="wo-muted">${personName(wo.person)} · ${plan.day}</div></div><div class="wo-date"><label>Data</label><input id="woDate" type="date" value="${today()}"></div></div>${ex}<label>Notas do treino</label><textarea id="woNotes" class="wo-note" placeholder="Opcional: técnica, dores, energia, alterações..."></textarea><div class="wo-actions"><button class="wo-btn primary" id="woSave">Guardar treino</button><button class="wo-btn" data-wo-back>Cancelar</button></div><div id="woStatus"></div>`);
+  bindCommon(list);list.querySelectorAll('[data-wo-back]').forEach(b=>b.onclick=()=>{wo.session=null;renderWorkout()});
+  list.querySelector('#woSave').onclick=()=>saveSession(plan,list);
+}
+
+async function saveSession(plan,list){
+  const date=list.querySelector('#woDate').value||today();
+  const exercises=plan.ex.map(([name,sets,target],i)=>({name,target,sets:Array.from({length:sets},(_,j)=>({kg:list.querySelector(`[data-kg="${i}-${j}"]`).value,reps:list.querySelector(`[data-reps="${i}-${j}"]`).value}))}));
+  const hasAny=exercises.some(e=>e.sets.some(s=>s.kg||s.reps));
+  if(!hasAny){list.querySelector('#woStatus').innerHTML='<div class="wo-muted">Preenche pelo menos uma série antes de guardar.</div>';return}
+  const now=Date.now(),data={person:wo.person,dayId:plan.id,day:plan.day,name:plan.name,date,exercises,notes:list.querySelector('#woNotes').value.trim(),createdAt:now};
+  const row={id:`workout-${wo.person}-${now}-${Math.random().toString(36).slice(2,7)}`,title:`Treino ${personName(wo.person)} · ${plan.name}`,area:'Pessoal',type:'Workout',priority:'Baixa',due:date,status:'feito',notes:JSON.stringify(data),url:'',deleted:false,createdAt:now,updatedAt:now};
+  await window.dbPut(row);if(window.scheduleSync)window.scheduleSync();
+  wo.session=null;wo.tab='history';await renderWorkout();
+}
+
+async function renderHistory(list){
+  const h=await history(),totalVol=Math.round(h.reduce((a,x)=>a+volumeOf(x.data),0));
+  const sessionsThisMonth=h.filter(x=>(x.row.due||'').slice(0,7)===today().slice(0,7)).length;
+  const items=h.map(({row,data})=>`<div class="wo-history-item"><div class="wo-history-head" data-wo-history><div><div class="wo-history-title">${esc(data.name||row.title)}</div><div class="wo-muted">${fmtDate(row.due)} · ${esc(data.day||'')} · ${personName(data.person)}</div></div><span class="wo-muted">›</span></div><div class="wo-history-body">${(data.exercises||[]).map(e=>`<div class="wo-history-ex"><div class="wo-ex-name">${esc(e.name)}</div><div class="wo-history-sets">${esc(setSummary(e))}</div></div>`).join('')}${data.notes?`<div class="wo-muted" style="margin-top:10px">Notas: ${esc(data.notes)}</div>`:''}</div></div>`).join('');
+  list.innerHTML=shell(`<div class="wo-kpis"><div class="wo-kpi"><small>Total</small><b>${h.length}</b></div><div class="wo-kpi"><small>Este mês</small><b>${sessionsThisMonth}</b></div><div class="wo-kpi"><small>Volume registado</small><b>${totalVol?totalVol.toLocaleString('pt-PT'):'—'}</b></div></div>${items||'<div class="wo-empty">Ainda não existem treinos guardados.</div>'}`);
+  bindCommon(list);list.querySelectorAll('[data-wo-history]').forEach(x=>x.onclick=()=>x.closest('.wo-history-item').classList.toggle('open'));
+}
+
+function bindCommon(list){
+  list.querySelectorAll('[data-wo-person]').forEach(b=>b.onclick=()=>{wo.person=b.dataset.woPerson;wo.session=null;renderWorkout()});
+  list.querySelectorAll('[data-wo-tab]').forEach(b=>b.onclick=()=>{wo.tab=b.dataset.woTab;wo.session=null;renderWorkout()});
+}
+
+window.Workout={mount:renderWorkout};
+})();
+
+  </script>
 <style id="fab-geometry-fix">
 /* FAB geometry fix */
 .fab{
