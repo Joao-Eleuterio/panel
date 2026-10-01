@@ -1,62 +1,61 @@
-# Painel Pessoal
+# Personal Dashboard
 
-PWA pessoal (tarefas, leituras, notas e ideias por área) com base de dados no Supabase
-e login por email/password. Site estático — sem build step.
+A personal productivity **PWA** for managing tasks, reading lists, notes, ideas and long-term challenges.
 
-## Estrutura
+The application combines local-first behaviour with authenticated cloud synchronization through Supabase.
 
-- `index.html` — a app inteira (UI + IndexedDB local + sync Supabase + auth)
-- `manifest.json`, `sw.js` — PWA (instalável no iPhone, offline)
-- `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` — ícones
-- `netlify.toml` — diz ao Netlify para servir a raiz do repo
+## Features
 
-## Deploy automático (GitHub + Netlify)
+- task and note management
+- reading and idea tracking
+- authenticated user accounts
+- local IndexedDB storage
+- Supabase synchronization
+- Row Level Security
+- installable PWA
+- offline application shell
+- personal challenge tracking
+- automatic deployment
 
-Configuração única. Depois disto, cada `git push` publica sozinho.
+## Tech stack
 
-1. Cria um repo no GitHub e sobe estes ficheiros (ver comandos abaixo).
-2. No Netlify: **Add new site → Import an existing project → GitHub** e escolhe o repo.
-   - Build command: (vazio)
-   - Publish directory: `.`
-3. Deploy. A partir daqui, qualquer push para `main` gera um novo deploy.
+- HTML
+- CSS
+- JavaScript
+- IndexedDB
+- Supabase
+- PostgreSQL
+- Supabase Auth
+- Netlify
+- Progressive Web App APIs
 
-### Comandos git (primeira vez)
+## Architecture
 
-```bash
-cd painel
-git init
-git add .
-git commit -m "Painel Pessoal inicial"
-git branch -M main
-git remote add origin https://github.com/<o-teu-user>/<o-repo>.git
-git push -u origin main
-```
+The application follows a lightweight local-first approach.
 
-### Atualizações
+**Client**
+- static web application
+- IndexedDB for local persistence
+- service worker for PWA behaviour
 
-```bash
-git add .
-git commit -m "descrição da mudança"
-git push
-```
+**Backend**
+- Supabase Auth
+- PostgreSQL persistence
+- Row Level Security
+- synchronization of authenticated user data
 
-## Backend (Supabase)
+Each database row is associated with a user ID and protected through RLS policies.
 
-- Projeto: `cakkiafbcdwrimyrgifi` (região eu-central-1)
-- Tabela `items` com RLS: cada linha tem `user_id` e só o dono autenticado lê/escreve.
-- A `anon key` embutida no `index.html` é pública por design; o acesso aos dados exige login.
+## Challenge module
 
-## Nota de segurança
+The project also contains a dedicated long-term challenge module with:
 
-Sem sessão iniciada, a base não é acessível (nem leitura nem escrita).
-A confirmação de email está ligada — ao criar conta, confirma pelo link e depois entra.
+- day-based progress tracking
+- local private photo storage
+- metadata synchronization
+- calendar-day calculations using the `Europe/Lisbon` timezone
+- browser notification support while the application is running
 
-## Módulo 75 João
+## Deployment
 
-O separador **75 João** implementa o desafio de 75 dias iniciado em 13/08/2026.
-
-- Dados do desafio: IndexedDB `challenge75` e espelho de metadados no sistema de sync existente.
-- Fotografias: blobs privados, apenas no dispositivo, nunca incluídos no backup/exportação normal.
-- Testes: abrir `challenge75.test.html` num browser; o título deve ficar `OK`.
-- Lembretes: Web Notifications condicionais enquanto a PWA está em execução. Uma PWA estática no iOS não agenda notificações locais fiáveis com a app fechada; isso exigiria backend Web Push/APNs.
-- A data é calculada por dias civis em `Europe/Lisbon`, sem dividir milissegundos por 24 horas.
+The application is deployed automatically through Netlify from the `main` branch.
